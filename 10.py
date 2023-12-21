@@ -1,102 +1,65 @@
-from collections import UserDict
-
+from datetime import datetime
 
 class Field:
-    def __init__(self, value):
-        self.value = value
+    def __init__(self, value=None):
+        self._value = value
 
+    @property
+    def value(self):
+        return self._value
 
-class Name(Field):
-    def __init__(self, value):
-        super().__init__(value)
+    @value.setter
+    def value(self, new_value):
+        self._value = new_value
 
 
 class Phone(Field):
-    def __init__(self, value):
-        super().__init__(value)
+    @Field.value.setter
+    def value(self, new_value):
+        if not isinstance(new_value, str):
+            raise ValueError("Phone number must be a string")
+        if not new_value.isdigit():
+            raise ValueError("Phone number must contain only digits")
+        self._value = new_value
 
-    def validate_format(self):
-        # Реалізуйте валідацію формату номера телефону
-        pass
+
+class Birthday(Field):
+    @Field.value.setter
+    def value(self, new_value):
+        if new_value is not None:
+            try:
+                datetime.strptime(new_value, "%Y-%m-%d")
+            except ValueError:
+                raise ValueError("Invalid birthday format. Use YYYY-MM-DD or leave it empty.")
+        self._value = new_value
 
 
 class Record:
-    def __init__(self, name):
-        self.name = Name(name)
-        self.phones = []
+    def __init__(self, name, phone=None, birthday=None):
+        self.name = name
+        self.phone = Phone(phone)
+        self.birthday = Birthday(birthday)
 
-    def add_phone(self, phone):
-        self.phones.append(Phone(phone))
-
-    def delete_phone(self, phone):
-        for p in self.phones:
-            if p.value == phone:
-                self.phones.remove(p)
-                break
-
-    def edit_phone(self, old_phone, new_phone):
-        for p in self.phones:
-            if p.value == old_phone:
-                p.value = new_phone
-                break
-
-    def find_phone(self, phone):
-        for p in self.phones:
-            if p.value == phone:
-                return p
-        return None
+    def days_to_birthday(self):
+        if self.birthday.value is None:
+            return None
+        today = datetime.today().date()
+        next_birthday = datetime.strptime(self.birthday.value, "%Y-%m-%d").date().replace(year=today.year)
+        if next_birthday < today:
+            next_birthday = next_birthday.replace(year=today.year + 1)
+        return (next_birthday - today).days
 
 
-class AddressBook(UserDict):
+class AddressBook:
+    def __init__(self):
+        self.records = []
+
     def add_record(self, record):
-        self.data[record.name.value] = record
+        self.records.append(record)
 
-    def find(self, name):
-        if name in self.data:
-            return self.data[name]
-        return None
+    def remove_record(self, record):
+        self.records.remove(record)
 
-    def delete(self, name):
-        if name in self.data:
-            del self.data[name]
-
-
-# Приклад використання
-address_book = AddressBook()
-
-# Додавання записів
-record1 = Record("John")
-record1.add_phone("1234567890")
-record1.add_phone("0987654321")
-address_book.add_record(record1)
-
-record2 = Record("Jane")
-record2.add_phone("1112223333")
-address_book.add_record(record2)
-
-# Пошук запису за іменем
-found_record = address_book.find("John")
-if found_record:
-    print("Знайдено запис:", found_record.name.value)
-else:
-    print("Запис не знайдено")
-
-# Видалення запису за іменем
-address_book.delete("Jane")
-
-# Виконання редагування номера телефону
-record = address_book.find("John")
-if record:
-    old_phone = "1234567890"
-    new_phone = "9876543210"
-    record.edit_phone(old_phone, new_phone)
-
-# Пошук номера телефону
-record = address_book.find("John")
-if record:
-    phone = "9876543210"
-    found_phone = record.find_phone(phone)
-    if found_phone:
-        print("Знайдено номер телефону:", found_phone.value)
-    else:
-        print("Номер телефону не знайдено")
+    def iterator(self, n):
+        for i in range(0, len(self.records), n):
+            yield self.records[i:i+n]
