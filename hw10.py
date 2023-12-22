@@ -1,34 +1,31 @@
-class Animal:
-    def __init__(self, nickname, weight):
-        self.nickname = nickname
-        self.weight = weight
+class Contacts:
+    current_id = 1
 
-    def say(self):
-        pass
+    def __init__(self):
+        self.contacts = []
 
-    def change_weight(self, weight):
-        self.weight = weight
+    def list_contacts(self):
+        return self.contacts
 
+    def add_contacts(self, name, phone, email, favorite):
+        self.contacts.append(
+            {
+                "id": Contacts.current_id,
+                "name": name,
+                "phone": phone,
+                "email": email,
+                "favorite": favorite,
+            }
+        )
+        Contacts.current_id += 1
 
-class Owner:
-    def __init__(self, name, age, address):
-        self.name = name
-        self.age = age
-        self.address = address
-              
-        
-    def info(self):
-        return {'name': self.name, 'age': self.age, 'address': self.address}
+    def get_contact_by_id(self, id):
+        result = list(filter(lambda contact: contact.get("id") == id, self.contacts))
+        return result[0] if len(result) > 0 else None
 
-        
-class Dog(Animal):
-    def __init__(self, nickname, weight, breed, owner):
-        self.breed = breed
-        self.owner = owner
-        super().__init__(nickname, weight)
-
-    def say(self):
-        return "Woof"
-
-    def who_is_owner(self):
-        return self.owner.info()
+    def remove_contacts(self, id):
+        contact = self.get_contact_by_id(id)
+        if contact:
+            self.contacts.remove(contact)
+            return True
+        return False
